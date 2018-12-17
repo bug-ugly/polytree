@@ -10,13 +10,41 @@ def createUI(pWindowTitle, pApplyCallBack):
         cmds.deleteUI(windowID)
 
     cmds.window(windowID, title=pWindowTitle, sizeable=False, resizeToFitChildren=True)
-    cmds.rowColumnLayout(numberOfColumns=3, columnWidth=[(1, 80), (2, 200), (3, 60)], columnOffset=[(1, 'right', 3)])
+    cmds.rowColumnLayout(numberOfColumns=3, columnWidth=[(1, 100), (2, 200), (3, 60)], columnOffset=[(1, 'right', 3)])
     cmds.text(label='Polygons:')
-    polyNumberField = cmds.intSliderGrp(min=3, max=20, value=4, step=1, field = True)
+    polyNumberField = cmds.intSliderGrp(min=3, max=20, value=4, step=1, field=True)
     cmds.separator(h=10, style='none')
 
     cmds.text(label='Tree depth:')
-    treeDepthField = cmds.intSlider(min=1, max=8, value=3, step=1)
+    treeDepthField = cmds.intSliderGrp(min=1, max=8, value=3, step=1, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Segment length:')
+    treeSegmentLength = cmds.floatSliderGrp(min=0.2, max=20, value=5, step=0.1, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Length decrease:')
+    treeLengthDecrease = cmds.floatSliderGrp(min=0.0, max=2, value=0.5, step=0.1, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Trunk radius:')
+    trunkRadius = cmds.floatSliderGrp(min=0.1, max=10, value=1, step=0.1, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Radius decrease:')
+    radiusDecrease = cmds.floatSliderGrp(min=0.1, max=5, value=0.1, step=0.1, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Branches:')
+    treeBranches = cmds.intSliderGrp(min=1, max=8, value=2, step=1, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Branches angle:')
+    treeBranches_a = cmds.floatSliderGrp(min=0, max=math.pi * 2, value=math.pi / 2, step=0.01, field=True)
+    cmds.separator(h=10, style='none')  # last column last row is blank
+
+    cmds.text(label='Foliage size:')
+    treeFoliageSze = cmds.floatSliderGrp(min=0.1, max=20, value=1, step=0.01, field=True)
     cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')  # empty row
@@ -25,9 +53,16 @@ def createUI(pWindowTitle, pApplyCallBack):
 
     cmds.separator(h=10, style='none')
     cmds.button(label='Create tree', command=functools.partial(pApplyCallBack,
-                                                         polyNumberField,
-                                                         treeDepthField
-                                                         ))  # when the button is pressed, callback function is called
+                                                               polyNumberField,
+                                                               treeDepthField,
+                                                               treeSegmentLength,
+                                                               treeLengthDecrease,
+                                                               trunkRadius,
+                                                               radiusDecrease,
+                                                               treeBranches,
+                                                               treeBranches_a,
+                                                               treeFoliageSze
+                                                               ))  # when the button is pressed, callback function is called
 
     def cancelCallBack(*pArgs):
         if cmds.window(windowID, exists=True):
@@ -37,14 +72,32 @@ def createUI(pWindowTitle, pApplyCallBack):
     cmds.showWindow()
 
 
-def applyCallBack(pPolyNumberField, pTreeDepthField, *pArgs):
+def applyCallBack(pPolyNumberField,
+                  pTreeDepthField,
+                  pTreeSegmentLength,
+                  pLengthDecrease,
+                  pRadius,
+                  pRadDecrease,
+                  pBranches,
+                  pBranches_a,
+                  pFoliageSze,
+                  *pArgs
+                  ):
     polycount = cmds.intSliderGrp(pPolyNumberField, query=True, value=True)
-    tree_depth = cmds.intSlider(pTreeDepthField, query=True, value=True)
-    create(tree_depth, 0, 5, 0.5, 1, 0.1, 0.7,
+    tree_depth = cmds.intSliderGrp(pTreeDepthField, query=True, value=True)
+    segment_length = cmds.floatSliderGrp(pTreeSegmentLength, query=True, value=True)
+    length_dec = cmds.floatSliderGrp(pLengthDecrease, query=True, value=True)
+    radius = cmds.floatSliderGrp(pRadius, query=True, value=True)
+    radius_d = cmds.floatSliderGrp(pRadDecrease, query=True, value=True)
+    branches = cmds.intSliderGrp(pBranches, query=True, value=True)
+    branches_a = cmds.floatSliderGrp(pBranches_a, query=True, value=True)
+    foliage_s = cmds.floatSliderGrp(pFoliageSze, query=True, value=True)
+    create(tree_depth, 0,
+           segment_length, length_dec, radius, radius_d, 0.7,
            0, 0, 0,
            math.pi + math.pi / 2, math.pi / 2, math.pi / 2,
            math.pi + math.pi / 2, math.pi / 2, math.pi / 2,
-           1, polycount, 2, math.pi / 2
+           1, polycount, branches, branches_a, foliage_s
            )
 
 
@@ -127,7 +180,7 @@ def create(p_depth, p_min_depth,
            p_lx, p_ly, p_lz,
            p_lax, p_lay, p_laz,
            p_nax, p_nay, p_naz,
-           switch, polygons, num_branches, branch_ang):
+           switch, polygons, num_branches, branch_ang, foliage_sze):
     if p_depth > p_min_depth:
         p_length = p_length - p_length_inc
         p_nx = p_lx
@@ -167,7 +220,7 @@ def create(p_depth, p_min_depth,
                    p_lx, p_ly, p_lz,
                    p_lax, p_lay, p_laz,
                    ang_split, ang_turn, p_naz,
-                   switch, polygons, num_branches, branch_ang)
+                   switch, polygons, num_branches, branch_ang, foliage_sze)
     else:
-        my_sphere = cmds.polySphere(r=random.uniform(p_r * 2, p_r * 4), sa=5, sh=5, name='leaves#')
+        my_sphere = cmds.polySphere(r=foliage_sze, sa=5, sh=5, name='leaves#')
         cmds.move(p_lx, p_ly, p_lz, my_sphere)
