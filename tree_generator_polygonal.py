@@ -72,7 +72,8 @@ def createUI(pWindowTitle, pApplyCallBack):
                                                                treeBranches_a,
                                                                treeFoliageSze,
                                                                treeFoliageRes
-                                                               ))  # when the button is pressed, callback function is called
+                                                               ))
+    # when the button is pressed, callback function is called
 
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
@@ -113,9 +114,9 @@ def applyCallBack(pPolyNumberField,
     create(tree_depth, 0,
            segment_length, length_dec, radius, radius_d,
            0, 0, 0,
-           math.pi + math.pi / 2, math.pi / 2, math.pi / 2,
-           math.pi + math.pi / 2, math.pi / 2, math.pi / 2,
-           1, polycount, branches, branches_a, foliage_s, foliage_r
+           math.pi+ math.pi / 2, math.pi/2, math.pi / 2,
+           math.pi+ math.pi / 2, math.pi/2, math.pi / 2,
+           -1, polycount, branches, branches_a, foliage_s, foliage_r
            )
 
 
@@ -226,19 +227,20 @@ def create(p_depth, p_min_depth,
         p_laz = p_naz
 
         switch = switch * -1
-
-        for i in range(0, num_branches):
-            ang_split = p_nax
-            ang_turn = p_nay
-            if switch > 0:
-                ang_split = (p_nax - branch_ang) + (branch_ang / num_branches) * (i + (num_branches + 1.0) / 2.0)
-            else:
-                ang_turn = (p_nay - branch_ang) + (branch_ang / num_branches) * (i + (num_branches + 1.0) / 2.0)
-            create(p_depth, p_min_depth, p_length, p_length_inc, p_r, p_rate,
-                   p_lx, p_ly, p_lz,
-                   p_lax, p_lay, p_laz,
-                   ang_split, ang_turn, p_naz,
-                   switch, polygons, num_branches, branch_ang, foliage_sze, foliage_res)
-    else:
-        my_sphere = cmds.polySphere(r=foliage_sze, sa=foliage_res, sh=foliage_res, name='leaves#')
-        cmds.move(p_lx, p_ly, p_lz, my_sphere)
+        if p_depth > p_min_depth:
+            for i in range(0, num_branches):
+                ang_split = p_nax
+                ang_turn = p_nay
+                print 'ang split:' + str(ang_split) + 'ang turn:' + str(ang_turn)
+                if switch > 0:
+                    ang_split = (p_nax - branch_ang) + (branch_ang/ num_branches) * (i + (num_branches + 1.0) / 2.0)
+                else:
+                    ang_turn = (p_nay - branch_ang) + (branch_ang / num_branches) * (i + (num_branches + 1.0) / 2.0)
+                create(p_depth, p_min_depth, p_length, p_length_inc, p_r, p_rate,
+                       p_lx, p_ly, p_lz,
+                       p_lax, p_lay, p_laz,
+                       ang_split, ang_turn, p_naz,
+                       switch, polygons, num_branches, branch_ang, foliage_sze, foliage_res)
+        else:
+            my_sphere = cmds.polySphere(r=foliage_sze, sa=foliage_res, sh=foliage_res, name='leaves#')
+            cmds.move(p_lx, p_ly, p_lz, my_sphere)
