@@ -116,86 +116,89 @@ def applyCallBack(pPolyNumberField,
            0.0, 1.0, 0.0,
            0.0, 0.0, 0.0,
            0.0, 0.0, 0.0,
-           0.0, 0.0, 0.0,
-           polycount, branches, branches_a, foliage_s, foliage_r , 0.0
+           polycount, branches, branches_a, foliage_s, foliage_r, 0.0, True
            )
 
 
 createUI('miniTree', applyCallBack)
 
 
-def get_rotations(px, py, pz,
-                  pax, pay, paz,
-                  paxx, paxy, paxz,
-                  nonegative):
-    # location - axis of rotation
-    x = px - paxx
-    y = py - paxy
-    z = pz - paxz
-    
-    if nonegative: 
-        if x < 0: 
-            x = x*-1
-        if y < 0: 
-            y = y*-1
-        if z < 0: 
-            z = z*-1
-    # z rotation
-    x1 = x * math.cos(paz) - y * math.sin(paz)
-    y1 = x * math.sin(paz) + y * math.cos(paz)
-    z1 = z
+# Arguments: 'axis point 1', 'axis point 2', 'point to be rotated', 'angle of rotation (in radians)' >> 'new point'
+def PointRotate3D(p1_x, p1_y, p1_z, p2_x, p2_y, p2_z, p0_x, p0_y, p0_z, theta):
+    # Translate so axis is at origin
+    p_x = p0_x - p1_x
+    p_y = p0_y - p1_y
+    p_z = p0_z - p1_z
 
-    # x rotation
-    y11 = y1 * math.cos(pax) - z1 * math.sin(pax)
-    z11 = y1 * math.sin(pax) + z1 * math.cos(pax)
-    x11 = x1
+    # Initialize point q
+    q = [0.0, 0.0, 0.0]
+    N_x = (p2_x - p1_x)
+    N_y = (p2_y - p1_y)
+    N_z = (p2_z - p1_z)
 
-    # y rotation
-    z111 = z11 * math.cos(pay) - x11 * math.sin(pay)
-    x111 = z11 * math.sin(pay) + x11 * math.cos(pay)
-    y111 = y11
+    Nm = math.sqrt(math.pow(N_x, 2) + math.pow(N_y, 2) + math.pow(N_z, 2))
 
-    # adding axis of rotation again
-    final = [x111 + paxx, y111 + paxy, z111 + paxz]
-    return final
+    # Rotation axis unit vector
+    n = [N_x / Nm, N_y / Nm, N_z / Nm]
+
+    # Matrix common factors
+    c = math.cos(theta)
+    t = (1 - math.cos(theta))
+    s = math.sin(theta)
+    X = n[0]
+    Y = n[1]
+    Z = n[2]
+
+    # Matrix 'M'
+    d11 = t * X ** 2 + c
+    d12 = t * X * Y - s * Z
+    d13 = t * X * Z + s * Y
+    d21 = t * X * Y + s * Z
+    d22 = t * Y ** 2 + c
+    d23 = t * Y * Z - s * X
+    d31 = t * X * Z - s * Y
+    d32 = t * Y * Z + s * X
+    d33 = t * Z ** 2 + c
+
+    #            |p.x|
+    # Matrix 'M'*|p.y|
+    #            |p.z|
+    q[0] = d11 * p_x + d12 * p_y + d13 * p_z
+    q[1] = d21 * p_x + d22 * p_y + d23 * p_z
+    q[2] = d31 * p_x + d32 * p_y + d33 * p_z
+
+    # Translate axis and rotated point back to original location
+    return [q[0] + p1_x, q[1] + p1_y, q[2] + p1_z]
 
 
 def polytube(p1_x, p1_y, p1_z,
              p2_x, p2_y, p2_z,
+             p0_x, p0_y, p0_z,
              p1_r, p2_r,
-             a1_x, a1_y, a1_z,
-             a2_x, a2_y, a2_z,
              polys):
     for i in range(0, polys):
         inc = math.pi * 2.0 / polys
         # points are being repositioned before rotation
-        
-        point1 = get_rotations(p1_x + p1_r * math.cos(inc * i),  # xyz of the point to be rotated
-                               p1_y,
-                               p1_z + p1_r * math.sin(inc * i),
-                               a1_x, a1_y, a1_z,  # xyz angles of the rotation
-                               p1_x, p1_y, p1_z,  # axis of the rotation
-                               False)
-        point2 = get_rotations(p1_x + p1_r * math.cos(inc * i + inc),
-                               p1_y,
-                               p1_z + p1_r * math.sin(inc * i + inc),
-                               a1_x, a1_y, a1_z,
-                               p1_x, p1_y, p1_z,
-                               False
+
+        point1 = PointRotate3D(p0_x, p0_y,p0_z,
+                               p1_x, p1_y,p1_z,
+                               p1_x + p1_r, p1_y, p1_z,  
+                               -(inc*i)
                                )
-        point3 = get_rotations(p2_x + p2_r * math.cos(inc * i),
-                               p2_y,
-                               p2_z + p2_r * math.sin(inc * i),
-                               a2_x, a2_y, a2_z,
-                               p2_x, p2_y, p2_z,
-                               False
+        point2 = PointRotate3D(p0_x, p0_y,p0_z,
+                               p1_x, p1_y,p1_z,
+                               p1_x + p1_r, p1_y, p1_z,  
+                               -(inc * i + inc)
                                )
-        point4 = get_rotations(p2_x + p2_r * math.cos(inc * i + inc),
-                               p2_y,
-                               p2_z + p2_r * math.sin(inc * i + inc),
-                               a2_x, a2_y, a2_z,
-                               p2_x, p2_y, p2_z,
-                               False
+        point3 = PointRotate3D(p1_x, p1_y,p1_z,
+                               p2_x, p2_y,p2_z,
+                               p2_x + p2_r, p2_y, p2_z,   
+                               -(inc * i)
+                               )
+        point4 = PointRotate3D(p1_x, p1_y,p1_z,
+                               p2_x, p2_y,p2_z, 
+                               p2_x + p2_r, p2_y, p2_z,   
+                               -(inc * i + inc)
                                )
 
         cmds.polyCreateFacet(p=[point2,
@@ -204,81 +207,95 @@ def polytube(p1_x, p1_y, p1_z,
                                 point4])
 
 
-# create a tree (depth of tree, min depth of tree = 0,
-#                length of a segment, decrease of segment length, radius of segment, radius decrease rate,
-#                xyz positions,
-#                angle of segment
-#                axis of rotation of segment
-#                boolean switch, polycount per segment, number of branches per segment, angle of branches)
 def create(p_depth, p_min_depth,
            p_length, p_length_inc, p_r, p_rate,
            p_lx, p_ly, p_lz,
-           p_lax, p_lay, p_laz,
-           p_nax, p_nay, p_naz,
+           p_llx, p_lly, p_llz,
            branch_ax, branch_ay, branch_az,
-           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn):
-    
+           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch):
     if p_depth > p_min_depth:
-
-        # we are going to find the magnitude of vector p_lx, p_ly, p_lz
-        m = math.sqrt(math.pow(p_lx, 2) + math.pow(p_ly, 2) + math.pow(p_lz, 2))
+        
+        #get vector of last segment
+        p_lxv = p_lx - p_llx
+        p_lyv = p_ly - p_lly
+        p_lzv = p_lz - p_llz
+        
+        # find the magnitude of vector p_lx, p_ly, p_lz
+        m = math.sqrt(math.pow(p_lxv, 2) + math.pow(p_lyv, 2) + math.pow(p_lzv, 2))
 
         # divide the vector by its magnitude to get unit vector
-        ux = p_lx / m
-        uy = p_ly / m
-        uz = p_lz / m
+        ux = p_lxv / m
+        uy = p_lyv / m
+        uz = p_lzv / m
 
         # now we add unit vector (multiplied by length) to the values to create new points
-        p_vx = p_lx + (ux * p_length)
-        p_vy = p_ly + (uy * p_length)
-        p_vz = p_lz + (uz * p_length)
+        p_vx = p_lxv + p_llx + (ux * p_length)
+        p_vy = p_lyv + p_lly + (uy * p_length)
+        p_vz = p_lzv + p_llz + (uz * p_length)
         
-        points = get_rotations(p_vx ,p_vy, p_vz, branch_ax, branch_ay, 0.0, p_lx, p_ly, p_lz, True) 
-        
-        p_nx = points[0]
-        p_ny = points[1]
-        p_nz = points[2] 
+        #if p_depth < 2: 
+            #branch = False 
             
+        if branch: 
+            points = PointRotate3D(p_lx, p_ly, p_lz, 
+                                    p_lx+1, p_ly,  p_lz, 
+                                    p_vx, p_vy, p_vz, 
+                                    branch_ax)
+            yTurn = PointRotate3D(p_lz, p_ly, p_lz,
+                                  p_vx, p_vy, p_vz,
+                                  points[0], points[1], points[2],
+                                  branch_ay)
+    
+            p_nx = yTurn[0]
+            p_ny = yTurn[1]
+            p_nz = yTurn[2]
+            
+            p_nax = branch_ax 
+            p_nay = branch_ay
+        else: 
+            p_nx = p_vx
+            p_ny = p_vy 
+            p_nz = p_vz
 
         # create a tube using the old and new points the angles control the tilt of the base and the top of the segment
         polytube(
             p_lx, p_ly, p_lz,  # base point
             p_nx, p_ny, p_nz,  # top point
+            p_llx, p_lly, p_llz,  
             p_r, p_r * p_rate,  # base and top radius
-            p_lax, p_lay, p_laz,  # base tilt
-            p_nax, p_nay, p_naz,  # top tilt
             polygons)
 
         # reducing length and radius for a new segment, counting depth
         p_length = p_length * p_length_inc
         p_r = p_r * p_rate
         p_depth = p_depth - 1.0
-
+        
+        p_llx = p_lx 
+        p_lly = p_ly 
+        p_llz = p_lz 
+        
         p_lx = p_nx
         p_ly = p_ny
         p_lz = p_nz
 
-        p_lax = p_nax
-        p_lay = p_nay
-        p_laz = p_naz
-        
-        branch = True 
-        
-        
         if p_depth > p_min_depth:
-            branch_ax =  branch_ang
-            turn = turn + math.pi/2.0
+            branch_ax = branch_ang
+            turn = turn + math.pi / 2.0
+            branch_az = 0
             print turn
             for i in range(0, num_branches):
-                
-                branch_ay = i* math.pi*2.0/num_branches + turn
+                branch_ay = ((i) * ((math.pi * 2.0) / num_branches)) + turn
 
                 create(p_depth, p_min_depth, p_length, p_length_inc, p_r, p_rate,
                        p_lx, p_ly, p_lz,
-                       p_lax, p_lay, p_laz,
-                       p_nax, p_nay, p_naz,
+                       p_llx, p_lly, p_llz,
                        branch_ax, branch_ay, branch_az,
-                       polygons, num_branches, branch_ang, foliage_sze, foliage_res,turn)
+                       polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch)
+                
         else:
             my_sphere = cmds.polySphere(r=foliage_sze, sa=foliage_res, sh=foliage_res, name='leaves#')
             cmds.move(p_lx, p_ly, p_lz, my_sphere)
+
+
+
+
