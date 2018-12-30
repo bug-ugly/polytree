@@ -111,6 +111,8 @@ def applyCallBack(pPolyNumberField,
     branches_a = cmds.floatSliderGrp(pBranches_a, query=True, value=True)
     foliage_s = cmds.floatSliderGrp(pFoliageSze, query=True, value=True)
     foliage_r = cmds.intSliderGrp(pFoliageRes, query=True, value=True)
+    
+    delete_previous()
     create(tree_depth,
            segment_length, length_dec, radius, radius_d,
            [0.0, 1.0, 0.0],
@@ -119,10 +121,38 @@ def applyCallBack(pPolyNumberField,
            polycount, branches, branches_a,
            foliage_s, foliage_r, 0.0, True
            )
-
+    merge_tree()
 
 createUI('miniTree', applyCallBack)
 
+def delete_previous(): 
+    segmentsList = cmds.ls('miniTreeTrunk*')
+    foliageList = cmds.ls('miniTreeFoliage*')
+    if len(segmentsList)>0:
+       cmds.delete(segmentsList)
+    if len(foliageList)>0:
+       cmds.delete(foliageList)
+        
+def merge_tree(): 
+    segmentsList = cmds.ls('treePart*')
+    foliageList = cmds.ls('leaves*')
+    
+    treeTrunk = cmds.polyUnite(segmentsList)
+    newTree = cmds.duplicate(treeTrunk[0], name= 'miniTreeTrunk')
+    cmds.polyMergeVertex(newTree)
+    cmds.delete(treeTrunk)
+    
+    leaves = cmds.polyUnite(foliageList)
+    cmds.duplicate(leaves[0], name = 'miniTreeFoliage')
+    cmds.delete(leaves)
+    
+    segmentsList = cmds.ls('treePart*')
+    if len(segmentsList)>0:
+        cmds.delete(segmentsList)
+        
+    foliageList = cmds.ls('leaves*')
+    if len(foliageList)>0:
+        cmds.delete(foliageList)
 
 # Arguments: 'axis point 1', 'axis point 2', 'point to be rotated', 'angle of rotation (in radians)' >> 'new point'
 def PointRotate3D(p1_x, p1_y, p1_z, p2_x, p2_y, p2_z, p0_x, p0_y, p0_z, theta):
@@ -172,6 +202,52 @@ def PointRotate3D(p1_x, p1_y, p1_z, p2_x, p2_y, p2_z, p0_x, p0_y, p0_z, theta):
     return [q[0] + p1_x, q[1] + p1_y, q[2] + p1_z]
 
 
+def getSpPoint(A,B,C):
+    # first convert line to normalized unit vector
+    x1 = A[0]
+    y1 = A[1]
+    z1 = A[2]
+    x2 = B[0] 
+    y2 = B[1]
+    z2 = B[2]
+    x3 = C[0] 
+    y3 = C[1]
+    z3 = C[2]
+    dx = x2 - x1
+    dy = y2 - y1
+    dz = z2 - z1
+    mag = math.sqrt(dx*dx + dy*dy + dz*dz)
+    dx = dx/mag
+    dy = dy/mag
+    dz = dz/mag
+    
+    # translate the point and get the dot product
+    theta = (dx * (x3 - x1)) + (dy * (y3 - y1)) + (dz * (z3 - z1))
+    x4 = (dx * theta) + x1
+    y4 = (dy * theta) + y1
+    z4 = (dz * theta) + z1
+    return [x4,y4,z4]
+
+def getCapPoint (A,B,radius):
+    x1 = A[0] 
+    y1 = A[1]
+    z1 = A[2]
+    x2 = B[0] 
+    y2 = B[1]
+    z2 = B[2]
+    dx = x1-x2
+    dy = y1-y2
+    dz = z1-z2
+    N = radius
+    dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+    dx = dx / dist
+    dy = dy / dist
+    dz = dz / dist
+    x3 = x1 + N*dy
+    y3 = y1 - N*dx
+    z3 = z1 - N * dz
+    return [x3, y3,z3]
+    
 def polytube(p1_x, p1_y, p1_z,
              p2_x, p2_y, p2_z,
              p0_x, p0_y, p0_z,
@@ -180,32 +256,35 @@ def polytube(p1_x, p1_y, p1_z,
     for i in range(0, polys):
         inc = math.pi * 2.0 / polys
         # points are being repositioned before rotation
-
+        
+        p = getCapPoint ([p1_x, p1_y, p1_z], [p0_x, p0_y, p0_z],p1_r) 
         point1 = PointRotate3D(p0_x, p0_y, p0_z,
                                p1_x, p1_y, p1_z,
-                               p1_x + p1_r, p1_y, p1_z,
+                               p[0], p[1], p[2],
                                -(inc * i)
-                               )
+                               )                  
         point2 = PointRotate3D(p0_x, p0_y, p0_z,
                                p1_x, p1_y, p1_z,
-                               p1_x + p1_r, p1_y, p1_z,
+                               p[0], p[1], p[2],
                                -(inc * i + inc)
                                )
+        p = getCapPoint ([p2_x, p2_y, p2_z], [p1_x, p1_y, p1_z],p2_r) 
         point3 = PointRotate3D(p1_x, p1_y, p1_z,
                                p2_x, p2_y, p2_z,
-                               p2_x + p2_r, p2_y, p2_z,
+                               p[0], p[1], p[2],
                                -(inc * i)
                                )
         point4 = PointRotate3D(p1_x, p1_y, p1_z,
                                p2_x, p2_y, p2_z,
-                               p2_x + p2_r, p2_y, p2_z,
+                               p[0], p[1], p[2],
                                -(inc * i + inc)
                                )
 
         cmds.polyCreateFacet(p=[point2,
                                 point1,
                                 point3,
-                                point4])
+                                point4],
+                                name = 'treePart#')
 
 
 def create(p_depth,  # tree depth,
@@ -232,8 +311,11 @@ def create(p_depth,  # tree depth,
         # branch = False
 
         if branch:
-            points = PointRotate3D(p_l[0], p_l[1], p_l[2],
-                                   p_l[0] + 1, p_l[1], p_l[2],
+            newP = [p_l[0] + 0.1, p_l[1], p_l[2]]
+            p = getSpPoint (p_l, p_ll, newP)
+            
+            points = PointRotate3D(p[0], p[1], p[2],
+                                   newP[0], newP[1], newP[2],
                                    v[0], v[1], v[2],
                                    branch_turn)
             yTurn = PointRotate3D(p_l[0], p_l[1], p_l[2],
@@ -266,7 +348,6 @@ def create(p_depth,  # tree depth,
             branch_turn = branch_ang
             turn = turn + math.pi / 2.0
 
-            print turn
             for i in range(0, num_branches):
                 branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
 
