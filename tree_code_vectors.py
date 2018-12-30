@@ -228,25 +228,27 @@ def getSpPoint(A,B,C):
     z4 = (dz * theta) + z1
     return [x4,y4,z4]
 
-def getCapPoint (A,B,radius):
-    x1 = A[0] 
-    y1 = A[1]
-    z1 = A[2]
-    x2 = B[0] 
-    y2 = B[1]
-    z2 = B[2]
-    dx = x1-x2
-    dy = y1-y2
-    dz = z1-z2
-    N = radius
-    dist = math.sqrt(dx*dx + dy*dy + dz*dz)
-    dx = dx / dist
-    dy = dy / dist
-    dz = dz / dist
-    x3 = x1 + N*dy
-    y3 = y1 - N*dx
-    z3 = z1 - N * dz
-    return [x3, y3,z3]
+def get_point_given_dist(a, b, dist):
+    #"""Return the point c such that line segment bc is perpendicular to
+    #line segment ab and segment bc has length dist.
+    #a and b are tuples of length 3, dist is a positive float.
+    vec_ab = (b[0]-a[0], b[1]-a[1], b[2]-a[2])
+    # Find a vector not parallel or antiparallel to vector ab
+    if vec_ab[1] != 0 or vec_ab[2] != 0:
+        vec = (1, 0, 0)
+    else:
+        vec = (0, 1, 0)
+    # Find the cross product of the vectors
+    cross = (vec_ab[1] * vec[2] - vec_ab[2] * vec[1],
+             vec_ab[2] * vec[0] - vec_ab[0] * vec[2],
+             vec_ab[0] * vec[1] - vec_ab[1] * vec[0])
+    # Find the vector in the same direction with length dist
+    factor = dist / math.sqrt(cross[0]**2 + cross[1]**2 + cross[2]**2)
+    newvec = (factor * cross[0], factor * cross[1], factor * cross[2])
+    # Find point c such that vector bc is that vector
+    c = (b[0] + newvec[0], b[1] + newvec[1], b[2] + newvec[2])
+    # Done!
+    return c
     
 def polytube(p1_x, p1_y, p1_z,
              p2_x, p2_y, p2_z,
@@ -257,7 +259,7 @@ def polytube(p1_x, p1_y, p1_z,
         inc = math.pi * 2.0 / polys
         # points are being repositioned before rotation
         
-        p = getCapPoint ([p1_x, p1_y, p1_z], [p0_x, p0_y, p0_z],p1_r) 
+        p = get_point_given_dist ([p0_x, p0_y, p0_z], [p1_x, p1_y, p1_z],p1_r) 
         point1 = PointRotate3D(p0_x, p0_y, p0_z,
                                p1_x, p1_y, p1_z,
                                p[0], p[1], p[2],
@@ -268,7 +270,7 @@ def polytube(p1_x, p1_y, p1_z,
                                p[0], p[1], p[2],
                                -(inc * i + inc)
                                )
-        p = getCapPoint ([p2_x, p2_y, p2_z], [p1_x, p1_y, p1_z],p2_r) 
+        p = get_point_given_dist ([p1_x, p1_y, p1_z], [p2_x, p2_y, p2_z],p2_r) 
         point3 = PointRotate3D(p1_x, p1_y, p1_z,
                                p2_x, p2_y, p2_z,
                                p[0], p[1], p[2],
