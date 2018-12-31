@@ -9,52 +9,39 @@ def createUI(pWindowTitle, pApplyCallBack):
     if cmds.window(windowID, exists=True):
         cmds.deleteUI(windowID)
 
-    cmds.window(windowID, title=pWindowTitle, sizeable=False, resizeToFitChildren=True)
-    cmds.rowColumnLayout(numberOfColumns=3, columnWidth=[(1, 50), (2, 400), (3, 50)], columnOffset=[(1, 'right', 2)])
+    cmds.window(windowID, title=pWindowTitle, sizeable=True, resizeToFitChildren=True)
+    cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[(2, 400)], columnOffset=[(2, 'right', 5)])
     cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-
-    cmds.separator(h=10, style='none')
+    randomSeed = cmds.intFieldGrp(label='Seed:',numberOfFields = 1,  value1=1234)
+    cmds.separator(h=10, style='in')
     polyNumberField = cmds.intSliderGrp(label='Polygons:', min=3, max=20, value=4, step=1, field=True)
     cmds.separator(h=10, style='none')
-
-    cmds.separator(h=10, style='none')
     treeDepthField = cmds.intSliderGrp(label='Tree depth:', min=1, max=8, value=3, step=1, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     treeSegmentLength = cmds.floatSliderGrp(label='Segment length:', min=0.2, max=20, value=5, step=0.1, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     treeLengthDecrease = cmds.floatSliderGrp(label='Length decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     trunkRadius = cmds.floatSliderGrp(label='Trunk radius:', min=0.1, max=10, value=1, step=0.1, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     radiusDecrease = cmds.floatSliderGrp(label='Radius decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     treeBranches = cmds.intSliderGrp(label='Branches:', min=1, max=8, value=2, step=1, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     treeBranches_a = cmds.floatSliderGrp(label='Branches angle:', min=0, max=math.pi, value=0.5, step=0.01,
                                          field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     treeFoliageSze = cmds.floatSliderGrp(label='Foliage size:', min=0.1, max=20, value=1, step=0.01, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')
     treeFoliageRes = cmds.intSliderGrp(label='Foliage resolution:', min=3, max=30, value=5, step=0.01, field=True)
-    cmds.separator(h=10, style='none')  # last column last row is blank
 
     cmds.separator(h=10, style='none')  # empty row
     cmds.separator(h=10, style='none')
@@ -71,7 +58,8 @@ def createUI(pWindowTitle, pApplyCallBack):
                                                                treeBranches,
                                                                treeBranches_a,
                                                                treeFoliageSze,
-                                                               treeFoliageRes
+                                                               treeFoliageRes,
+                                                               randomSeed
                                                                ))
     # when the button is pressed, callback function is called
 
@@ -85,7 +73,7 @@ def createUI(pWindowTitle, pApplyCallBack):
         if cmds.window(windowID, exists=True):
             cmds.deleteUI(windowID)
 
-    cmds.button(label='Cancel', command=cancelCallBack)
+   # cmds.button(label='Cancel', command=cancelCallBack)
     cmds.showWindow()
 
 
@@ -99,6 +87,7 @@ def applyCallBack(pPolyNumberField,
                   pBranches_a,
                   pFoliageSze,
                   pFoliageRes,
+                  pSeed,
                   *pArgs
                   ):
     polycount = cmds.intSliderGrp(pPolyNumberField, query=True, value=True)
@@ -111,7 +100,8 @@ def applyCallBack(pPolyNumberField,
     branches_a = cmds.floatSliderGrp(pBranches_a, query=True, value=True)
     foliage_s = cmds.floatSliderGrp(pFoliageSze, query=True, value=True)
     foliage_r = cmds.intSliderGrp(pFoliageRes, query=True, value=True)
-    
+    p_seed = cmds.intFieldGrp(pSeed, query = True, value = True)
+    random.seed(p_seed[0])
     delete_previous()
     create(tree_depth,
            segment_length, length_dec, radius, radius_d,
