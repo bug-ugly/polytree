@@ -28,7 +28,7 @@ def createUI(pWindowTitle, pApplyCallBack):
     trunkRadius = cmds.floatSliderGrp(label='Trunk radius:', min=0.1, max=10, value=1, step=0.1, field=True)
 
     cmds.separator(h=10, style='none')
-    radiusDecrease = cmds.floatSliderGrp(label='Radius decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True)
+    radiusDecrease = cmds.floatSliderGrp(label='Radius decrease:', min=0.0, max=1, value=0.45, step=0.01, field=True)
 
     cmds.separator(h=10, style='none')
     treeBranches = cmds.intSliderGrp(label='Branches:', min=1, max=8, value=2, step=1, field=True)
@@ -286,26 +286,23 @@ def create(p_depth,  # tree depth,
            branch_turn, branch_shift,
            polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch):
     if p_depth > 0:
-
         # get vector of last segment
         lv = [p_l[0] - p_ll[0], p_l[1] - p_ll[1], p_l[2] - p_ll[2]]
-
         # find the magnitude of vector p_lx, p_ly, p_lz
         m = math.sqrt(math.pow(lv[0], 2) + math.pow(lv[1], 2) + math.pow(lv[2], 2))
-
         # divide the vector by its magnitude to get unit vector
         u = [lv[0] / m, lv[1] / m, lv[2] / m]
-
         # now we add unit vector (multiplied by length) to the values to create new points
         v = [lv[0] + p_ll[0] + (u[0] * p_length), lv[1] + p_ll[1] + (u[1] * p_length), lv[2] + p_ll[2] + (u[2] * p_length)]
-
-        # if p_depth < 2:
-        # branch = False
-
+       
+        if random.uniform(0,1) < 0.1:
+            branch = False
+        if random.uniform(0,1) < 0.1:
+            p_depth = 0
+            
         if branch:
             newP = [p_l[0] + 0.1, p_l[1], p_l[2]]
             p = getSpPoint (p_l, p_ll, newP)
-            
             points = PointRotate3D(p[0], p[1], p[2],
                                    newP[0], newP[1], newP[2],
                                    v[0], v[1], v[2],
@@ -314,9 +311,7 @@ def create(p_depth,  # tree depth,
                                   v[0], v[1], v[2],
                                   points[0], points[1], points[2],
                                   branch_shift)
-
             p_n = yTurn
-
         else:
             p_n = v
 
