@@ -4,7 +4,7 @@ import random
 import functools
 
 
-def createUI(pWindowTitle, pApplyCallBack):
+def create_ui(pWindowTitle, pApplyCallBack):
     windowID = 'miniTree'  # unique id to make sure only one is open at a time
     if cmds.window(windowID, exists=True):
         cmds.deleteUI(windowID)
@@ -12,7 +12,7 @@ def createUI(pWindowTitle, pApplyCallBack):
     cmds.window(windowID, title=pWindowTitle, sizeable=True, resizeToFitChildren=True)
     cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[(2, 400)], columnOffset=[(2, 'right', 5)])
     cmds.separator(h=10, style='none')
-    randomSeed = cmds.intFieldGrp(label='Seed:',numberOfFields = 1,  value1=1234)
+    randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=1234)
     cmds.separator(h=10, style='in')
     polyNumberField = cmds.intSliderGrp(label='Polygons:', min=3, max=20, value=4, step=1, field=True)
     cmds.separator(h=10, style='none')
@@ -43,10 +43,14 @@ def createUI(pWindowTitle, pApplyCallBack):
     cmds.separator(h=10, style='none')
     treeFoliageRes = cmds.intSliderGrp(label='Foliage resolution:', min=3, max=30, value=5, step=0.01, field=True)
 
-    cmds.separator(h=10, style='none')  # empty row
+    cmds.separator(h=10, style='none')
+    foliageColor = cmds.colorSliderGrp(label='Foliage color:', rgb=(0.30, 0.7, 0.40))
+    cmds.separator(h=10, style='none')
+    treeColor = cmds.colorSliderGrp(label='Tree color:', rgb=(0.4, 0.3, 0.3))
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
-
+    cmds.separator(h=10, style='none')
+    cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
     cmds.button(label='Create tree', command=functools.partial(pApplyCallBack,
                                                                polyNumberField,
@@ -59,7 +63,9 @@ def createUI(pWindowTitle, pApplyCallBack):
                                                                treeBranches_a,
                                                                treeFoliageSze,
                                                                treeFoliageRes,
-                                                               randomSeed
+                                                               randomSeed,
+                                                               foliageColor,
+                                                               treeColor
                                                                ))
     # when the button is pressed, callback function is called
 
@@ -73,7 +79,7 @@ def createUI(pWindowTitle, pApplyCallBack):
         if cmds.window(windowID, exists=True):
             cmds.deleteUI(windowID)
 
-   # cmds.button(label='Cancel', command=cancelCallBack)
+    # cmds.button(label='Cancel', command=cancelCallBack)
     cmds.showWindow()
 
 
@@ -88,6 +94,8 @@ def applyCallBack(pPolyNumberField,
                   pFoliageSze,
                   pFoliageRes,
                   pSeed,
+                  pFoliageC,
+                  pTreeC,
                   *pArgs
                   ):
     polycount = cmds.intSliderGrp(pPolyNumberField, query=True, value=True)
@@ -100,7 +108,15 @@ def applyCallBack(pPolyNumberField,
     branches_a = cmds.floatSliderGrp(pBranches_a, query=True, value=True)
     foliage_s = cmds.floatSliderGrp(pFoliageSze, query=True, value=True)
     foliage_r = cmds.intSliderGrp(pFoliageRes, query=True, value=True)
-    p_seed = cmds.intFieldGrp(pSeed, query = True, value = True)
+    p_seed = cmds.intFieldGrp(pSeed, query=True, value=True)
+    treeCor = cmds.colorSliderGrp(pTreeC, query=True, rgbValue=True)
+    foliageCor = cmds.colorSliderGrp(pFoliageC, query=True, rgbValue=True)
+
+    cmds.setAttr(treeTrunkShader + '.color', treeCor[0], treeCor[1], treeCor[2], type='double3')
+    # cmds.connectAttr( treeTrunkShader+'.outColor', treeTrunkShaderSG+'.surfaceShader', f=1) 
+    cmds.setAttr(foliageShader + '.color', foliageCor[0], foliageCor[1], foliageCor[2], type='double3')
+    # cmds.connectAttr( foliageShader+'.outColor', foliageShaderSG+'.surfaceShader', force=True)
+
     random.seed(p_seed[0])
     delete_previous()
     create(tree_depth,
@@ -111,41 +127,45 @@ def applyCallBack(pPolyNumberField,
            polycount, branches, branches_a,
            foliage_s, foliage_r, 0.0, True
            )
+
     merge_tree()
 
-createUI('miniTree', applyCallBack)
 
-def delete_previous(): 
+def delete_previous():
     segmentsList = cmds.ls('miniTreeTrunk*')
     foliageList = cmds.ls('miniTreeFoliage*')
-    if len(segmentsList)>0:
-       cmds.delete(segmentsList)
-    if len(foliageList)>0:
-       cmds.delete(foliageList)
-        
-def merge_tree(): 
-    segmentsList = cmds.ls('treePart*')
-    foliageList = cmds.ls('leaves*')
-    
-    treeTrunk = cmds.polyUnite(segmentsList)
-    newTree = cmds.duplicate(treeTrunk[0], name= 'miniTreeTrunk')
-    cmds.polyMergeVertex(newTree)
-    cmds.delete(treeTrunk)
-    
-    leaves = cmds.polyUnite(foliageList)
-    cmds.duplicate(leaves[0], name = 'miniTreeFoliage')
-    cmds.delete(leaves)
-    
-    segmentsList = cmds.ls('treePart*')
-    if len(segmentsList)>0:
+    if len(segmentsList) > 0:
         cmds.delete(segmentsList)
-        
-    foliageList = cmds.ls('leaves*')
-    if len(foliageList)>0:
+    if len(foliageList) > 0:
         cmds.delete(foliageList)
 
+
+def merge_tree():
+    segmentsList = cmds.ls('treePart*')
+    foliageList = cmds.ls('leaves*')
+
+    treeTrunk = cmds.polyUnite(segmentsList)
+    newTree = cmds.duplicate(treeTrunk[0], name='miniTreeTrunk')
+    cmds.polyMergeVertex(newTree)
+    cmds.sets(newTree, e=1, forceElement=treeTrunkShaderSG)
+    cmds.delete(treeTrunk)
+
+    leaves = cmds.polyUnite(foliageList)
+    newLeaves = cmds.duplicate(leaves[0], name='miniTreeFoliage')
+    cmds.sets(newLeaves, e=1, forceElement=foliageShaderSG)
+    cmds.delete(leaves)
+
+    segmentsList = cmds.ls('treePart*')
+    if len(segmentsList) > 0:
+        cmds.delete(segmentsList)
+
+    foliageList = cmds.ls('leaves*')
+    if len(foliageList) > 0:
+        cmds.delete(foliageList)
+
+
 # Arguments: 'axis point 1', 'axis point 2', 'point to be rotated', 'angle of rotation (in radians)' >> 'new point'
-def PointRotate3D(p1_x, p1_y, p1_z, p2_x, p2_y, p2_z, p0_x, p0_y, p0_z, theta):
+def point_rotate_3d(p1_x, p1_y, p1_z, p2_x, p2_y, p2_z, p0_x, p0_y, p0_z, theta):
     # Translate so axis is at origin
     p_x = p0_x - p1_x
     p_y = p0_y - p1_y
@@ -192,38 +212,29 @@ def PointRotate3D(p1_x, p1_y, p1_z, p2_x, p2_y, p2_z, p0_x, p0_y, p0_z, theta):
     return [q[0] + p1_x, q[1] + p1_y, q[2] + p1_z]
 
 
-def getSpPoint(A,B,C):
+def get_sp_point(a, b, c):
     # first convert line to normalized unit vector
-    x1 = A[0]
-    y1 = A[1]
-    z1 = A[2]
-    x2 = B[0] 
-    y2 = B[1]
-    z2 = B[2]
-    x3 = C[0] 
-    y3 = C[1]
-    z3 = C[2]
-    dx = x2 - x1
-    dy = y2 - y1
-    dz = z2 - z1
-    mag = math.sqrt(dx*dx + dy*dy + dz*dz)
-    dx = dx/mag
-    dy = dy/mag
-    dz = dz/mag
-    
+    dx = b[0] - a[0]
+    dy = b[1] - a[1]
+    dz = b[2] - a[2]
+    mag = math.sqrt(dx * dx + dy * dy + dz * dz)
+    dx = dx / mag
+    dy = dy / mag
+    dz = dz / mag
     # translate the point and get the dot product
-    theta = (dx * (x3 - x1)) + (dy * (y3 - y1)) + (dz * (z3 - z1))
-    x4 = (dx * theta) + x1
-    y4 = (dy * theta) + y1
-    z4 = (dz * theta) + z1
-    return [x4,y4,z4]
+    theta = (dx * (c[0] - a[0])) + (dy * (c[1] - a[1])) + (dz * (c[2] - a[2]))
+    x4 = (dx * theta) + a[0]
+    y4 = (dy * theta) + a[1]
+    z4 = (dz * theta) + a[2]
+    return [x4, y4, z4]
+
 
 def get_point_given_dist(a, b, dist):
-    #"""Return the point c such that line segment bc is perpendicular to
-    #line segment ab and segment bc has length dist.
-    #a and b are tuples of length 3, dist is a positive float.
-    vec_ab = (b[0]-a[0], b[1]-a[1], b[2]-a[2])
-    # Find a vector not parallel or antiparallel to vector ab
+    # """Return the point c such that line segment bc is perpendicular to
+    # line segment ab and segment bc has length dist.
+    # a and b are tuples of length 3, dist is a positive float.
+    vec_ab = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
+    # Find a vector not parallel or anti-parallel to vector ab
     if vec_ab[1] != 0 or vec_ab[2] != 0:
         vec = (1, 0, 0)
     else:
@@ -233,13 +244,14 @@ def get_point_given_dist(a, b, dist):
              vec_ab[2] * vec[0] - vec_ab[0] * vec[2],
              vec_ab[0] * vec[1] - vec_ab[1] * vec[0])
     # Find the vector in the same direction with length dist
-    factor = dist / math.sqrt(cross[0]**2 + cross[1]**2 + cross[2]**2)
+    factor = dist / math.sqrt(cross[0] ** 2 + cross[1] ** 2 + cross[2] ** 2)
     newvec = (factor * cross[0], factor * cross[1], factor * cross[2])
     # Find point c such that vector bc is that vector
     c = (b[0] + newvec[0], b[1] + newvec[1], b[2] + newvec[2])
     # Done!
     return c
-    
+
+
 def polytube(p1_x, p1_y, p1_z,
              p2_x, p2_y, p2_z,
              p0_x, p0_y, p0_z,
@@ -248,35 +260,35 @@ def polytube(p1_x, p1_y, p1_z,
     for i in range(0, polys):
         inc = math.pi * 2.0 / polys
         # points are being repositioned before rotation
-        
-        p = get_point_given_dist ([p0_x, p0_y, p0_z], [p1_x, p1_y, p1_z],p1_r) 
-        point1 = PointRotate3D(p0_x, p0_y, p0_z,
-                               p1_x, p1_y, p1_z,
-                               p[0], p[1], p[2],
-                               -(inc * i)
-                               )                  
-        point2 = PointRotate3D(p0_x, p0_y, p0_z,
-                               p1_x, p1_y, p1_z,
-                               p[0], p[1], p[2],
-                               -(inc * i + inc)
-                               )
-        p = get_point_given_dist ([p1_x, p1_y, p1_z], [p2_x, p2_y, p2_z],p2_r) 
-        point3 = PointRotate3D(p1_x, p1_y, p1_z,
-                               p2_x, p2_y, p2_z,
-                               p[0], p[1], p[2],
-                               -(inc * i)
-                               )
-        point4 = PointRotate3D(p1_x, p1_y, p1_z,
-                               p2_x, p2_y, p2_z,
-                               p[0], p[1], p[2],
-                               -(inc * i + inc)
-                               )
+
+        p = get_point_given_dist([p0_x, p0_y, p0_z], [p1_x, p1_y, p1_z], p1_r)
+        point1 = point_rotate_3d(p0_x, p0_y, p0_z,
+                                 p1_x, p1_y, p1_z,
+                                 p[0], p[1], p[2],
+                                 -(inc * i)
+                                 )
+        point2 = point_rotate_3d(p0_x, p0_y, p0_z,
+                                 p1_x, p1_y, p1_z,
+                                 p[0], p[1], p[2],
+                                 -(inc * i + inc)
+                                 )
+        p = get_point_given_dist([p1_x, p1_y, p1_z], [p2_x, p2_y, p2_z], p2_r)
+        point3 = point_rotate_3d(p1_x, p1_y, p1_z,
+                                 p2_x, p2_y, p2_z,
+                                 p[0], p[1], p[2],
+                                 -(inc * i)
+                                 )
+        point4 = point_rotate_3d(p1_x, p1_y, p1_z,
+                                 p2_x, p2_y, p2_z,
+                                 p[0], p[1], p[2],
+                                 -(inc * i + inc)
+                                 )
 
         cmds.polyCreateFacet(p=[point2,
                                 point1,
                                 point3,
                                 point4],
-                                name = 'treePart#')
+                             name='treePart#')
 
 
 def create(p_depth,  # tree depth,
@@ -293,24 +305,25 @@ def create(p_depth,  # tree depth,
         # divide the vector by its magnitude to get unit vector
         u = [lv[0] / m, lv[1] / m, lv[2] / m]
         # now we add unit vector (multiplied by length) to the values to create new points
-        v = [lv[0] + p_ll[0] + (u[0] * p_length), lv[1] + p_ll[1] + (u[1] * p_length), lv[2] + p_ll[2] + (u[2] * p_length)]
-       
-        if random.uniform(0,1) < 0.1:
+        v = [lv[0] + p_ll[0] + (u[0] * p_length), lv[1] + p_ll[1] + (u[1] * p_length),
+             lv[2] + p_ll[2] + (u[2] * p_length)]
+
+        if random.uniform(0, 1) < 0.1:
             branch = False
-        if random.uniform(0,1) < 0.1:
+        if random.uniform(0, 1) < 0.1:
             p_depth = 0
-            
+
         if branch:
             newP = [p_l[0] + 0.1, p_l[1], p_l[2]]
-            p = getSpPoint (p_l, p_ll, newP)
-            points = PointRotate3D(p[0], p[1], p[2],
-                                   newP[0], newP[1], newP[2],
-                                   v[0], v[1], v[2],
-                                   branch_turn)
-            yTurn = PointRotate3D(p_l[0], p_l[1], p_l[2],
-                                  v[0], v[1], v[2],
-                                  points[0], points[1], points[2],
-                                  branch_shift)
+            p = get_sp_point(p_l, p_ll, newP)
+            points = point_rotate_3d(p[0], p[1], p[2],
+                                     newP[0], newP[1], newP[2],
+                                     v[0], v[1], v[2],
+                                     branch_turn)
+            yTurn = point_rotate_3d(p_l[0], p_l[1], p_l[2],
+                                    v[0], v[1], v[2],
+                                    points[0], points[1], points[2],
+                                    branch_shift)
             p_n = yTurn
         else:
             p_n = v
@@ -318,7 +331,7 @@ def create(p_depth,  # tree depth,
         # create a tube using the old and new points the angles control the tilt of the base and the top of the segment
         polytube(
             p_l[0], p_l[1], p_l[2],  # base point
-            p_n[0], p_n[1], p_n[2], # top point
+            p_n[0], p_n[1], p_n[2],  # top point
             p_ll[0], p_ll[1], p_ll[2],
             p_r, p_r * p_rate,  # base and top radius
             polygons)
@@ -328,23 +341,39 @@ def create(p_depth,  # tree depth,
         p_r = p_r * p_rate
         p_depth = p_depth - 1.0
 
-        p_ll = p_l
-        p_l = p_n
-
         if p_depth > 0:
             branch_turn = branch_ang
             turn = turn + math.pi / 2.0
-
             for i in range(0, num_branches):
-                branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
+                if random.uniform(0, 1) < 0.9:
+                    turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
+                if random.uniform(0, 1) < 0.9:
+                    branch_turn = branch_turn + random.uniform(-math.pi / 6, math.pi / 6)
 
+                branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
                 create(p_depth, p_length, p_length_inc, p_r, p_rate,
+                       p_n,
                        p_l,
-                       p_ll,
                        branch_turn, branch_shift,
                        polygons, num_branches, branch_ang,
                        foliage_sze, foliage_res, turn, branch)
 
         else:
             my_sphere = cmds.polySphere(r=foliage_sze, sa=foliage_res, sh=foliage_res, name='leaves#')
-            cmds.move(p_l[0], p_l[1], p_l[2], my_sphere)
+            cmds.move(p_n[0], p_n[1], p_n[2], my_sphere)
+
+
+create_ui('miniTree', applyCallBack)
+
+# Create a new trunk shader
+treeTrunkShader = cmds.shadingNode('lambert', asShader=True)
+cmds.setAttr(treeTrunkShader + '.color', 0.4, 0.3, 0.3, type='double3')
+treeTrunkShaderSG = cmds.sets(renderable=1, noSurfaceShader=1, empty=1, name='treeTrunkShaderSG');
+cmds.connectAttr(treeTrunkShader + '.outColor', treeTrunkShaderSG + '.surfaceShader', f=1)
+
+# Create a new foliage shader
+foliageShader = cmds.shadingNode('lambert', asShader=True)
+cmds.setAttr(foliageShader + '.color', 0.30, 0.7, 0.40, type='double3')
+foliageShaderSG = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='foliageShaderSG');
+cmds.connectAttr(foliageShader + '.outColor', foliageShaderSG + '.surfaceShader', force=True)
+
