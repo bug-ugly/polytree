@@ -9,71 +9,72 @@ def create_ui(pWindowTitle, pApplyCallBack):
     if cmds.window(windowID, exists=True):
         cmds.deleteUI(windowID)
 
-    cmds.window(windowID, title=pWindowTitle, sizeable=True, resizeToFitChildren=True)
-    cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[(2, 400)], columnOffset=[(2, 'right', 5)])
+    cmds.window(windowID, title=pWindowTitle, resizeToFitChildren=True, sizeable=False)
+    cmds.rowColumnLayout(numberOfColumns=1)
+
+    form = cmds.formLayout()
+    tabs = cmds.tabLayout(innerMarginWidth=5, innerMarginHeight=5)
+    cmds.formLayout(form, edit=True,
+                    attachForm=((tabs, 'top', 0), (tabs, 'left', 0), (tabs, 'bottom', 0), (tabs, 'right', 0)))
+
+    child1 = cmds.rowColumnLayout(numberOfColumns=1)
+
     cmds.separator(h=10, style='none')
-    randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=1234)
-    cmds.separator(h=10, style='in')
     polyNumberField = cmds.intSliderGrp(label='Polygons:', min=3, max=20, value=4, step=1, field=True)
-    cmds.separator(h=10, style='none')
     treeDepthField = cmds.intSliderGrp(label='Tree depth:', min=1, max=8, value=3, step=1, field=True)
-
-    cmds.separator(h=10, style='none')
     treeSegmentLength = cmds.floatSliderGrp(label='Segment length:', min=0.2, max=20, value=5, step=0.1, field=True)
-
-    cmds.separator(h=10, style='none')
     treeLengthDecrease = cmds.floatSliderGrp(label='Length decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True)
-
-    cmds.separator(h=10, style='none')
     trunkRadius = cmds.floatSliderGrp(label='Trunk radius:', min=0.1, max=10, value=1, step=0.1, field=True)
-
-    cmds.separator(h=10, style='none')
     radiusDecrease = cmds.floatSliderGrp(label='Radius decrease:', min=0.0, max=1, value=0.45, step=0.01, field=True)
-
-    cmds.separator(h=10, style='none')
     treeBranches = cmds.intSliderGrp(label='Branches:', min=1, max=8, value=2, step=1, field=True)
-
-    cmds.separator(h=10, style='none')
     treeBranches_a = cmds.floatSliderGrp(label='Branches angle:', min=0, max=math.pi, value=0.5, step=0.01,
                                          field=True)
-
-    cmds.separator(h=10, style='none')
-    treeFoliageSze = cmds.floatSliderGrp(label='Foliage size:', min=0.1, max=20, value=1, step=0.01, field=True)
-
-    cmds.separator(h=10, style='none')
-    treeFoliageRes = cmds.intSliderGrp(label='Foliage resolution:', min=3, max=30, value=5, step=0.01, field=True)
-
-    cmds.separator(h=10, style='none')
-    foliageColor = cmds.colorSliderGrp(label='Foliage color:', rgb=(0.30, 0.7, 0.40))
-    cmds.separator(h=10, style='none')
     treeColor = cmds.colorSliderGrp(label='Tree color:', rgb=(0.4, 0.3, 0.3))
     cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.button(label='Create tree', command=functools.partial(pApplyCallBack,
-                                                               polyNumberField,
-                                                               treeDepthField,
-                                                               treeSegmentLength,
-                                                               treeLengthDecrease,
-                                                               trunkRadius,
-                                                               radiusDecrease,
-                                                               treeBranches,
-                                                               treeBranches_a,
-                                                               treeFoliageSze,
-                                                               treeFoliageRes,
-                                                               randomSeed,
-                                                               foliageColor,
-                                                               treeColor
-                                                               ))
-    # when the button is pressed, callback function is called
+
+    cmds.setParent('..')
+
+    child2 = cmds.rowColumnLayout(numberOfColumns=1)
 
     cmds.separator(h=10, style='none')
+    treeFoliageNumber = cmds.intSliderGrp(label='Foliage number:', min=1, max=20, value=1, step=1, field=True)
+    treeFoliageSpread = cmds.floatSliderGrp(label='Foliage spread:', min=0, max=5, value=0, step=0.01, field=True)
+    treeFoliageSze = cmds.floatSliderGrp(label='Foliage size:', min=0.1, max=6, value=1, step=0.01, field=True)
+    treeFoliageRes = cmds.intSliderGrp(label='Foliage resolution:', min=0, max=4, value=1, step=1, field=True)
+    foliageColor = cmds.colorSliderGrp(label='Foliage color:', rgb=(0.30, 0.7, 0.40))
     cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
-    cmds.separator(h=10, style='none')
+
+    cmds.setParent('..')
+
+    cmds.tabLayout(tabs, edit=True, tabLabel=((child1, 'Tree'), (child2, 'Foliage')))
+    cmds.setParent('..')
+    cmds.setParent('..')
+
+    cmds.rowColumnLayout(numberOfColumns=2)
+
+    def changeTextFld(*args):
+        cmds.intFieldGrp(randomSeed, edit=True, v1=random.randint(0, 9999))
+
+    randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=1234)
+    cmds.button(label='Randomize seed', command=changeTextFld)
+
+    cmds.button(label='Create tree', align='center', command=functools.partial(pApplyCallBack,
+                                                                               polyNumberField,
+                                                                               treeDepthField,
+                                                                               treeSegmentLength,
+                                                                               treeLengthDecrease,
+                                                                               trunkRadius,
+                                                                               radiusDecrease,
+                                                                               treeBranches,
+                                                                               treeBranches_a,
+                                                                               treeFoliageSze,
+                                                                               treeFoliageRes,
+                                                                               randomSeed,
+                                                                               foliageColor,
+                                                                               treeColor,
+                                                                               treeFoliageNumber,
+                                                                               treeFoliageSpread
+                                                                               ))
 
     def cancelCallBack(*pArgs):
         if cmds.window(windowID, exists=True):
@@ -83,21 +84,24 @@ def create_ui(pWindowTitle, pApplyCallBack):
     cmds.showWindow()
 
 
-def applyCallBack(pPolyNumberField,
-                  pTreeDepthField,
-                  pTreeSegmentLength,
-                  pLengthDecrease,
-                  pRadius,
-                  pRadDecrease,
-                  pBranches,
-                  pBranches_a,
-                  pFoliageSze,
-                  pFoliageRes,
-                  pSeed,
-                  pFoliageC,
-                  pTreeC,
-                  *pArgs
-                  ):
+def apply_call_back(pPolyNumberField,
+                    pTreeDepthField,
+                    pTreeSegmentLength,
+                    pLengthDecrease,
+                    pRadius,
+                    pRadDecrease,
+                    pBranches,
+                    pBranches_a,
+                    pFoliageSze,
+                    pFoliageRes,
+                    pSeed,
+                    pFoliageC,
+                    pTreeC,
+                    pFoliageN,
+                    pFoliageSpread,
+                    *pArgs
+                    ):
+    
     polycount = cmds.intSliderGrp(pPolyNumberField, query=True, value=True)
     tree_depth = cmds.intSliderGrp(pTreeDepthField, query=True, value=True)
     segment_length = cmds.floatSliderGrp(pTreeSegmentLength, query=True, value=True)
@@ -111,12 +115,14 @@ def applyCallBack(pPolyNumberField,
     p_seed = cmds.intFieldGrp(pSeed, query=True, value=True)
     treeCor = cmds.colorSliderGrp(pTreeC, query=True, rgbValue=True)
     foliageCor = cmds.colorSliderGrp(pFoliageC, query=True, rgbValue=True)
-
+    foliage_n = cmds.intSliderGrp(pFoliageN, query=True, value=True)
+    foliage_spread = cmds.floatSliderGrp(pFoliageSpread, query=True, value=True)
+    
     cmds.setAttr(treeTrunkShader + '.color', treeCor[0], treeCor[1], treeCor[2], type='double3')
     # cmds.connectAttr( treeTrunkShader+'.outColor', treeTrunkShaderSG+'.surfaceShader', f=1) 
     cmds.setAttr(foliageShader + '.color', foliageCor[0], foliageCor[1], foliageCor[2], type='double3')
     # cmds.connectAttr( foliageShader+'.outColor', foliageShaderSG+'.surfaceShader', force=True)
-
+    
     random.seed(p_seed[0])
     delete_previous()
     create(tree_depth,
@@ -125,9 +131,9 @@ def applyCallBack(pPolyNumberField,
            [0.0, 0.0, 0.0],
            0.0, 0.0,
            polycount, branches, branches_a,
-           foliage_s, foliage_r, 0.0, True
+           foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread
            )
-
+    
     merge_tree()
 
 
@@ -296,7 +302,7 @@ def create(p_depth,  # tree depth,
            p_l,  # last segment tip
            p_ll,  # last segment base
            branch_turn, branch_shift,
-           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch):
+           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr):
     if p_depth > 0:
         # get vector of last segment
         lv = [p_l[0] - p_ll[0], p_l[1] - p_ll[1], p_l[2] - p_ll[2]]
@@ -337,7 +343,7 @@ def create(p_depth,  # tree depth,
             polygons)
 
         # reducing length and radius for a new segment, counting depth
-        p_length = p_length * p_length_inc
+        p_length = (p_length * p_length_inc)
         p_r = p_r * p_rate
         p_depth = p_depth - 1.0
 
@@ -345,6 +351,7 @@ def create(p_depth,  # tree depth,
             branch_turn = branch_ang
             turn = turn + math.pi / 2.0
             for i in range(0, num_branches):
+                p_length = p_length + random.uniform(-0.5, 0.5)
                 if random.uniform(0, 1) < 0.9:
                     turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
                 if random.uniform(0, 1) < 0.9:
@@ -356,14 +363,26 @@ def create(p_depth,  # tree depth,
                        p_l,
                        branch_turn, branch_shift,
                        polygons, num_branches, branch_ang,
-                       foliage_sze, foliage_res, turn, branch)
+                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr)
 
         else:
-            my_sphere = cmds.polySphere(r=foliage_sze, sa=foliage_res, sh=foliage_res, name='leaves#')
-            cmds.move(p_n[0], p_n[1], p_n[2], my_sphere)
+            randx = []
+            randy = [] #i am creating random lists because otherwise changing the number of foliage would affect the seed
+            randz = []
+            for r in range (0,20): 
+                randx.append(random.uniform(-foliage_spr, foliage_spr))
+                randy.append(random.uniform(-foliage_spr, foliage_spr))
+                randz.append(random.uniform(-foliage_spr, foliage_spr))
+            for j in range(0, foliage_num):
+                my_sphere = cmds.polyPlatonicSolid(l=foliage_sze, name='leaves#')
+                for i in range(0, foliage_res):
+                    cmds.polySmooth(my_sphere)
+                cmds.move(p_n[0] + randx[j],
+                          p_n[1] + randy[j],
+                          p_n[2] + randz[j], my_sphere)
 
 
-create_ui('miniTree', applyCallBack)
+create_ui('miniTree', apply_call_back)
 
 # Create a new trunk shader
 treeTrunkShader = cmds.shadingNode('lambert', asShader=True)
