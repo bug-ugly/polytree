@@ -20,47 +20,68 @@ def create_ui(pWindowTitle, pApplyCallBack):
 
     child1 = cmds.rowColumnLayout(numberOfColumns=1, adj=True)
 
-    cmds.separator(h=10, style='none')
+    cmds.separator(h=10, style='in')
+    cmds.text( label='General', align='center' )
+    cmds.separator(h=10, style='in')
+    
     polyNumberField = cmds.intSliderGrp(label='Polygons:', min=3, max=20, value=4, step=1, field=True,
                                         annotation='Changes number of polygons in each tree segment')
-    treeDepthField = cmds.intSliderGrp(label='Tree depth:', min=1, max=8, value=3, step=1, field=True,
+    treeDepthField = cmds.intSliderGrp(label='Levels (tree size):', min=1, max=8, value=3, step=1, field=True,
                                        annotation='Changes number of branching levels')
-    treeSegmentLength = cmds.floatSliderGrp(label='Segment length:', min=0.2, max=20, value=5, step=0.1, field=True,
-                                            annotation='Changes the initial length of each branch')
-    treeFirstSegmentLength = cmds.floatSliderGrp(label='First segment multiplier:', min=0.1, max=5, value=1, step=0.1,
+    treeFirstSegmentLength = cmds.floatSliderGrp(label='Base length:', min=0.1, max=5, value=1, step=0.1,
                                                  field=True,
-                                                 annotation='Increases/decreases the length of the first tree segment')
-    treeLengthDecrease = cmds.floatSliderGrp(label='Length decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True,
+                                                 annotation='Increases/decreases the length of the first tree segment')                                   
+    cmds.separator(h=10, style='in')
+    cmds.text( label='Branch length', align='center' )
+    cmds.separator(h=10, style='in')
+    treeSegmentLength = cmds.floatSliderGrp(label='Length:', min=0.2, max=20, value=5, step=0.1, field=True,
+                                            annotation='Changes the initial length of each branch')
+    
+    treeLengthDecrease = cmds.floatSliderGrp(label='Decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True,
                                              annotation='Affects how the length of each branch decreases as the tree grows')
-    trunkRadius = cmds.floatSliderGrp(label='Trunk radius:', min=0.1, max=10, value=1, step=0.1, field=True,
+    cmds.separator(h=10, style='in')
+    cmds.text( label='Trunk/branch radius', align='center' )
+    cmds.separator(h=10, style='in')                                        
+    trunkRadius = cmds.floatSliderGrp(label='Radius:', min=0.1, max=10, value=1, step=0.1, field=True,
                                       annotation='Changes the initial radius of the tree trunk')
-    radiusDecrease = cmds.floatSliderGrp(label='Radius decrease:', min=0.0, max=1, value=0.45, step=0.01, field=True,
+    radiusDecrease = cmds.floatSliderGrp(label='Decrease:', min=0.0, max=1, value=0.45, step=0.01, field=True,
                                          annotation='Affects how the radius of the branches decreases as the tree grows')
-    treeBranches = cmds.intSliderGrp(label='Branches:', min=1, max=8, value=2, step=1, field=True,
+    cmds.separator(h=10, style='in')
+    cmds.text( label='Branching', align='center' )
+    cmds.separator(h=10, style='in')                                          
+    treeBranches = cmds.intSliderGrp(label='Max branches:', min=1, max=8, value=2, step=1, field=True,
                                      annotation='Changes the maximum number of branches that may occur when branching')
     treeBranches_a = cmds.floatSliderGrp(label='Branches angle:', min=0, max=math.pi, value=0.5, step=0.01,
                                          field=True, annotation='Manipulates the angle of braches')
+    cmds.separator(h=10, style='in')
+    cmds.text( label='Randomness', align='center' )
+    cmds.separator(h=10, style='in')                                     
     branchingChance = cmds.floatSliderGrp(label='Branching chance:', min=0, max=1, value=0.9,
                                           step=0.01,
                                           field=True,
                                           annotation='Lower values increase a chance of a branch not appearing')
-    branchAngleChance = cmds.floatSliderGrp(label='Branch angle change chance:', min=0, max=1, value=0.9,
+    cmds.separator(h=10, style='in')                                       
+    branchAngleChance = cmds.floatSliderGrp(label='Angle shift shance:', min=0, max=1, value=0.9,
                                             step=0.01,
                                             field=True,
                                             annotation='Chance of a branch angle deviating from the angle of all other branches')
-    branchTurnChance = cmds.floatSliderGrp(label='Branch turn change chance:', min=0, max=1, value=0.9,
+    branchAngleRAmount = cmds.floatSliderGrp(label='Angle random amount:', min=0, max=math.pi, value=math.pi / 6,
+                                             step=0.01,
+                                             field=True,
+                                             annotation='Angle of how much a branch angle can change randomly')
+    cmds.separator(h=10, style='in')                                                                                 
+    branchTurnChance = cmds.floatSliderGrp(label='Turn shift chance:', min=0, max=1, value=0.9,
                                            step=0.01,
                                            field=True,
                                            annotation='Chance of a branch turn deviating from the turn of all other branches')
     branchTurnRAmount = cmds.floatSliderGrp(label='Turn random amount:', min=0, max=math.pi, value=math.pi / 2,
                                             step=0.01,
                                             field=True, annotation='Angle of how much a branch can turn randomly')
-    branchAngleRAmount = cmds.floatSliderGrp(label='Angle random amount:', min=0, max=math.pi, value=math.pi / 6,
-                                             step=0.01,
-                                             field=True,
-                                             annotation='Angle of how much a branch angle can change randomly')
-
-    treeColor = cmds.colorSliderGrp(label='Tree color:', rgb=(0.4, 0.3, 0.3),
+    
+    cmds.separator(h=10, style='in')
+    cmds.text( label='Colour', align='center' )
+    cmds.separator(h=10, style='in')           
+    treeColor = cmds.colorSliderGrp(label='Tree colour:', rgb=(0.4, 0.3, 0.3),
                                     annotation='Double click the colour to open the palette, changes tree colour')
     cmds.separator(h=10, style='none')
 
@@ -68,16 +89,25 @@ def create_ui(pWindowTitle, pApplyCallBack):
 
     child2 = cmds.rowColumnLayout(numberOfColumns=1, adj=True)
 
-    cmds.separator(h=10, style='none')
-    treeFoliageNumber = cmds.intSliderGrp(label='Foliage number:', min=1, max=20, value=1, step=1, field=True,
-                                          annotation='Number of foliage spheres per branch')
-    treeFoliageSpread = cmds.floatSliderGrp(label='Foliage spread:', min=0, max=5, value=0, step=0.01, field=True,
-                                            annotation='Randomise the foliage spheres position (necessary when changing foliage number)')
-    treeFoliageSze = cmds.floatSliderGrp(label='Foliage size:', min=0.1, max=6, value=1, step=0.01, field=True,
+    cmds.separator(h=10, style='in')
+    cmds.text( label='General', align='center' )
+    cmds.separator(h=10, style='in')   
+    treeFoliageSze = cmds.floatSliderGrp(label='Size:', min=0.1, max=6, value=1, step=0.01, field=True,
                                          annotation='Size of each foliage sphere')
-    treeFoliageRes = cmds.intSliderGrp(label='Foliage resolution:', min=0, max=4, value=1, step=1, field=True,
+    treeFoliageRes = cmds.intSliderGrp(label='Resolution:', min=0, max=4, value=1, step=1, field=True,
                                        annotation='Subdivides each of the foliage spheres')
-    foliageColor = cmds.colorSliderGrp(label='Foliage color:', rgb=(0.30, 0.7, 0.40),
+    cmds.separator(h=10, style='in')
+    cmds.text( label='More foliage', align='center' )
+    cmds.separator(h=10, style='in')                                      
+    treeFoliageNumber = cmds.intSliderGrp(label='Spheres number:', min=1, max=20, value=1, step=1, field=True,
+                                          annotation='Number of foliage spheres per branch')
+    treeFoliageSpread = cmds.floatSliderGrp(label='Randomise positions:', min=0, max=5, value=0, step=0.01, field=True,
+                                            annotation='Randomise the foliage spheres position (necessary when changing foliage number)')
+
+    cmds.separator(h=10, style='in')
+    cmds.text( label='Colour', align='center' )
+    cmds.separator(h=10, style='in')                                      
+    foliageColor = cmds.colorSliderGrp(label='Foliage colour:', rgb=(0.30, 0.7, 0.40),
                                        annotation='Double click the colour to open the palette, changes foliage colour')
     cmds.separator(h=10, style='none')
 
@@ -100,11 +130,13 @@ def create_ui(pWindowTitle, pApplyCallBack):
     cmds.separator(h=10, style='none')
     randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=9981,
                                   annotation='Number affecting random generation of the tree')
+    cmds.separator(h=10, style='none')                              
     cmds.button(label='Randomize seed', command=changeTextFld, annotation='Changes seed value to a random value')
     cmds.setParent('..')
     cmds.rowColumnLayout(numberOfColumns=1, adj=True)
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
+
     cmds.button(label='Create tree', align='center', annotation='Create a tree using the above settings',
                 command=functools.partial(pApplyCallBack,
                                           polyNumberField,
