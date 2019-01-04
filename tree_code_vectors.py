@@ -35,6 +35,13 @@ def create_ui(pWindowTitle, pApplyCallBack):
     branchingChance = cmds.floatSliderGrp(label='Branching chance:', min=0, max=1, value=0.9,
                                              step=0.01,
                                              field=True)
+    branchAngleChance = cmds.floatSliderGrp(label='Branch angle change chance:', min=0, max=1, value=0.9,
+                                             step=0.01,
+                                             field=True)
+    branchTurnChance = cmds.floatSliderGrp(label='Branch turn change chance:', min=0, max=1, value=0.9,
+                                             step=0.01,
+                                             field=True)
+                                             
     treeColor = cmds.colorSliderGrp(label='Tree color:', rgb=(0.4, 0.3, 0.3))
     cmds.separator(h=10, style='none')
 
@@ -67,7 +74,7 @@ def create_ui(pWindowTitle, pApplyCallBack):
 
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
-    randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=1234)
+    randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=9981)
     cmds.button(label='Randomize seed', command=changeTextFld)
     cmds.setParent('..')
     cmds.rowColumnLayout(numberOfColumns=1, adj=True)
@@ -91,7 +98,9 @@ def create_ui(pWindowTitle, pApplyCallBack):
                                                                                treeFoliageSpread,
                                                                                treeFirstSegmentLength,
                                                                                treeTypeSelect,
-                                                                               branchingChance
+                                                                               branchingChance,
+                                                                               branchAngleChance,
+                                                                               branchTurnChance
                                                                                ))
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
@@ -122,6 +131,8 @@ def apply_call_back(pPolyNumberField,
                     pFirstSegmentL,
                     pTreeType,
                     pBranchChance,
+                    pAngleChance, 
+                    pTurnChance,
                     *pArgs
                     ):
     polycount = cmds.intSliderGrp(pPolyNumberField, query=True, value=True)
@@ -142,6 +153,8 @@ def apply_call_back(pPolyNumberField,
     first_segment_l = cmds.floatSliderGrp(pFirstSegmentL, query=True, value=True)
     tree_type = cmds.radioButtonGrp(pTreeType, query=True, select=True)
     branch_chance = cmds.floatSliderGrp(pBranchChance, query=True, value=True)
+    angle_chance = cmds.floatSliderGrp(pAngleChance, query=True, value=True)
+    turn_chance = cmds.floatSliderGrp(pTurnChance, query=True, value=True)
 
     cmds.setAttr(treeTrunkShader + '.color', treeCor[0], treeCor[1], treeCor[2], type='double3')
     # cmds.connectAttr( treeTrunkShader+'.outColor', treeTrunkShaderSG+'.surfaceShader', f=1) 
@@ -157,7 +170,7 @@ def apply_call_back(pPolyNumberField,
                [0.0, 0.0, 0.0],
                0.0, 0.0,
                polycount, branches, branches_a,
-               foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, first_segment_l, branch_chance
+               foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, first_segment_l, branch_chance, angle_chance, turn_chance
                )
     if tree_type == 2:
         createPine(tree_depth,
@@ -166,7 +179,7 @@ def apply_call_back(pPolyNumberField,
                    [0.0, 0.0, 0.0],
                    0.0, 0.0,
                    polycount, branches, branches_a,
-                   foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, first_segment_l, 1
+                   foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, first_segment_l, 1, branch_chance, angle_chance, turn_chance
                    )
 
     merge_tree()
@@ -346,7 +359,7 @@ def create(p_depth,  # tree depth,
            p_ll,  # last segment base
            branch_turn, branch_shift,
            polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr,
-           first_segment_l, branch_chance):
+           first_segment_l, branch_chance, angle_chance, turn_chance):
     if p_depth > 0:
 
         branch_length = p_length * first_segment_l
@@ -396,9 +409,9 @@ def create(p_depth,  # tree depth,
             for i in range(0, num_branches):
                 p_length = p_length + random.uniform(-0.5, 0.5)
                 branch = True
-                if random.uniform(0, 1) < 0.9:
+                if random.uniform(0, 1) < turn_chance:
                     turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
-                if random.uniform(0, 1) < 0.9:
+                if random.uniform(0, 1) < angle_chance:
                     branch_turn = branch_turn + random.uniform(-math.pi / 6, math.pi / 6)
                 if random.uniform(0, 1) < 1.0 - branch_chance:
                     branch = False
@@ -410,7 +423,7 @@ def create(p_depth,  # tree depth,
                            p_l,
                            branch_turn, branch_shift,
                            polygons, num_branches, branch_ang,
-                           foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, branch_chance)
+                           foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, branch_chance, angle_chance, turn_chance)
 
         if c == num_branches or p_depth <= 0:
             randx = []
@@ -435,7 +448,7 @@ def createPine(p_depth,  # tree depth,
                p_ll,  # last segment base
                branch_turn, branch_shift,
                polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr,
-               first_segment_l, pine_level):
+               first_segment_l, pine_level, branch_chance, angle_chance, turn_chance):
     if p_depth > 0:
 
         branch_length = p_length * first_segment_l
@@ -489,27 +502,31 @@ def createPine(p_depth,  # tree depth,
                        p_l,
                        branch_turn, branch_shift,
                        polygons, num_branches, branch_ang,
-                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, 1)
-
+                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, 1, branch_chance, angle_chance, turn_chance)
+        c = 0
         if p_depth > 0:
             branch_turn = branch_ang
             turn = turn + math.pi / 2.0
             for i in range(0, num_branches):
+                branch = True
                 p_length = p_length + random.uniform(-0.5, 0.5)
-                if random.uniform(0, 1) < 0.9:
+                if random.uniform(0, 1) < turn_chance:
                     turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
-                if random.uniform(0, 1) < 0.9:
+                if random.uniform(0, 1) < angle_chance:
                     branch_turn = branch_turn + random.uniform(-math.pi / 6, math.pi / 6)
-
+                if random.uniform(0, 1) < 1.0 - branch_chance:
+                    branch = False
+                    c = c + 1
                 branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
-                createPine(p_depth * 0.5, p_length * 0.7, p_length_inc, p_r, p_rate,
-                           p_n,
-                           p_l,
-                           branch_turn, branch_shift,
-                           polygons, num_branches, branch_ang,
-                           foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, 2)
+                if branch:
+                    createPine(p_depth * 0.5, p_length * 0.7, p_length_inc, p_r, p_rate,
+                               p_n,
+                               p_l,
+                               branch_turn, branch_shift,
+                               polygons, num_branches, branch_ang,
+                               foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, 2, branch_chance, angle_chance, turn_chance)
 
-        else:
+        if c == num_branches or p_depth <= 0:
             randx = []
             randy = []  # i am creating random lists because otherwise changing the number of foliage would affect the seed
             randz = []
