@@ -9,10 +9,10 @@ def create_ui(pWindowTitle, pApplyCallBack):
     if cmds.window(windowID, exists=True):
         cmds.deleteUI(windowID)
 
-    cmds.window(windowID, title=pWindowTitle, sizeable = False, resizeToFitChildren = True)
-    cmds.rowColumnLayout(numberOfColumns=1, adj = True)
-    logopath = cmds.internalVar(upd = True)+ "icons/mini_tree_logo.png"
-    cmds.image(image=logopath )
+    cmds.window(windowID, title=pWindowTitle, sizeable=False, resizeToFitChildren=True)
+    cmds.rowColumnLayout(numberOfColumns=1, adj=True)
+    logopath = cmds.internalVar(upd=True) + "icons/mini_tree_logo.png"
+    cmds.image(image=logopath)
     form = cmds.formLayout()
     tabs = cmds.tabLayout(innerMarginWidth=5, innerMarginHeight=5)
     cmds.formLayout(form, edit=True,
@@ -24,6 +24,8 @@ def create_ui(pWindowTitle, pApplyCallBack):
     polyNumberField = cmds.intSliderGrp(label='Polygons:', min=3, max=20, value=4, step=1, field=True)
     treeDepthField = cmds.intSliderGrp(label='Tree depth:', min=1, max=8, value=3, step=1, field=True)
     treeSegmentLength = cmds.floatSliderGrp(label='Segment length:', min=0.2, max=20, value=5, step=0.1, field=True)
+    treeFirstSegmentLength = cmds.floatSliderGrp(label='First segment multiplier:', min=0.1, max=5, value=1, step=0.1,
+                                                 field=True)
     treeLengthDecrease = cmds.floatSliderGrp(label='Length decrease:', min=0.0, max=1, value=0.8, step=0.01, field=True)
     trunkRadius = cmds.floatSliderGrp(label='Trunk radius:', min=0.1, max=10, value=1, step=0.1, field=True)
     radiusDecrease = cmds.floatSliderGrp(label='Radius decrease:', min=0.0, max=1, value=0.45, step=0.01, field=True)
@@ -35,7 +37,7 @@ def create_ui(pWindowTitle, pApplyCallBack):
 
     cmds.setParent('..')
 
-    child2 = cmds.rowColumnLayout(numberOfColumns=1, adj = True)
+    child2 = cmds.rowColumnLayout(numberOfColumns=1, adj=True)
 
     cmds.separator(h=10, style='none')
     treeFoliageNumber = cmds.intSliderGrp(label='Foliage number:', min=1, max=20, value=1, step=1, field=True)
@@ -51,16 +53,20 @@ def create_ui(pWindowTitle, pApplyCallBack):
     cmds.setParent('..')
     cmds.setParent('..')
 
-    cmds.rowColumnLayout(numberOfColumns=2, adj = True)
+    cmds.rowColumnLayout(numberOfColumns=1, adj=True)
+
+    treeTypeSelect = cmds.radioButtonGrp(label='Tree type', sl = 1, labelArray2=['Normal', 'Pine'], numberOfRadioButtons=2)
+    cmds.separator(h=10, style='none')
 
     def changeTextFld(*args):
         cmds.intFieldGrp(randomSeed, edit=True, v1=random.randint(0, 9999))
+
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
     randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=1234)
     cmds.button(label='Randomize seed', command=changeTextFld)
     cmds.setParent('..')
-    cmds.rowColumnLayout(numberOfColumns=1, adj = True)
+    cmds.rowColumnLayout(numberOfColumns=1, adj=True)
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
     cmds.button(label='Create tree', align='center', command=functools.partial(pApplyCallBack,
@@ -78,10 +84,13 @@ def create_ui(pWindowTitle, pApplyCallBack):
                                                                                foliageColor,
                                                                                treeColor,
                                                                                treeFoliageNumber,
-                                                                               treeFoliageSpread
+                                                                               treeFoliageSpread,
+                                                                               treeFirstSegmentLength,
+                                                                               treeTypeSelect
                                                                                ))
     cmds.separator(h=10, style='none')
     cmds.separator(h=10, style='none')
+
     def cancelCallBack(*pArgs):
         if cmds.window(windowID, exists=True):
             cmds.deleteUI(windowID)
@@ -105,9 +114,10 @@ def apply_call_back(pPolyNumberField,
                     pTreeC,
                     pFoliageN,
                     pFoliageSpread,
+                    pFirstSegmentL,
+                    pTreeType,
                     *pArgs
                     ):
-    
     polycount = cmds.intSliderGrp(pPolyNumberField, query=True, value=True)
     tree_depth = cmds.intSliderGrp(pTreeDepthField, query=True, value=True)
     segment_length = cmds.floatSliderGrp(pTreeSegmentLength, query=True, value=True)
@@ -123,23 +133,35 @@ def apply_call_back(pPolyNumberField,
     foliageCor = cmds.colorSliderGrp(pFoliageC, query=True, rgbValue=True)
     foliage_n = cmds.intSliderGrp(pFoliageN, query=True, value=True)
     foliage_spread = cmds.floatSliderGrp(pFoliageSpread, query=True, value=True)
+    first_segment_l = cmds.floatSliderGrp(pFirstSegmentL, query=True, value=True)
+    tree_type = cmds.radioButtonGrp(pTreeType, query=True, select=True)
     
     cmds.setAttr(treeTrunkShader + '.color', treeCor[0], treeCor[1], treeCor[2], type='double3')
     # cmds.connectAttr( treeTrunkShader+'.outColor', treeTrunkShaderSG+'.surfaceShader', f=1) 
     cmds.setAttr(foliageShader + '.color', foliageCor[0], foliageCor[1], foliageCor[2], type='double3')
     # cmds.connectAttr( foliageShader+'.outColor', foliageShaderSG+'.surfaceShader', force=True)
-    
+
     random.seed(p_seed[0])
     delete_previous()
-    create(tree_depth,
-           segment_length, length_dec, radius, radius_d,
-           [0.0, 1.0, 0.0],
-           [0.0, 0.0, 0.0],
-           0.0, 0.0,
-           polycount, branches, branches_a,
-           foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, True
-           )
-    
+    if tree_type == 1:
+        create(tree_depth,
+               segment_length, length_dec, radius, radius_d,
+               [0.0, 1.0, 0.0],
+               [0.0, 0.0, 0.0],
+               0.0, 0.0,
+               polycount, branches, branches_a,
+               foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, first_segment_l
+               )
+    if tree_type == 2: 
+        createPine(tree_depth,
+               segment_length, length_dec, radius, radius_d,
+               [0.0, 1.0, 0.0],
+               [0.0, 0.0, 0.0],
+               0.0, 0.0,
+               polycount, branches, branches_a,
+               foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, first_segment_l, 1
+               )
+
     merge_tree()
 
 
@@ -156,14 +178,22 @@ def merge_tree():
     segmentsList = cmds.ls('treePart*')
     foliageList = cmds.ls('leaves*')
 
-    treeTrunk = cmds.polyUnite(segmentsList)
-    newTree = cmds.duplicate(treeTrunk[0], name='miniTreeTrunk')
+    if len(segmentsList) < 3:
+        treeTrunk = segmentsList[0]
+    else:
+        treeTrunk = cmds.polyUnite(segmentsList)
+        
+    newTree = cmds.duplicate(treeTrunk, name='miniTreeTrunk')
     cmds.polyMergeVertex(newTree)
     cmds.sets(newTree, e=1, forceElement=treeTrunkShaderSG)
     cmds.delete(treeTrunk)
 
-    leaves = cmds.polyUnite(foliageList)
-    newLeaves = cmds.duplicate(leaves[0], name='miniTreeFoliage')
+    if len(foliageList) < 3:
+        leaves = foliageList[0]
+    else:
+        leaves = cmds.polyUnite(foliageList)
+        
+    newLeaves = cmds.duplicate(leaves, name='miniTreeFoliage')
     cmds.sets(newLeaves, e=1, forceElement=foliageShaderSG)
     cmds.delete(leaves)
 
@@ -308,8 +338,12 @@ def create(p_depth,  # tree depth,
            p_l,  # last segment tip
            p_ll,  # last segment base
            branch_turn, branch_shift,
-           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, pine):
+           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr,
+           first_segment_l):
     if p_depth > 0:
+
+        branch_length = p_length * first_segment_l
+
         # get vector of last segment
         lv = [p_l[0] - p_ll[0], p_l[1] - p_ll[1], p_l[2] - p_ll[2]]
         # find the magnitude of vector p_lx, p_ly, p_lz
@@ -317,8 +351,8 @@ def create(p_depth,  # tree depth,
         # divide the vector by its magnitude to get unit vector
         u = [lv[0] / m, lv[1] / m, lv[2] / m]
         # now we add unit vector (multiplied by length) to the values to create new points
-        v = [lv[0] + p_ll[0] + (u[0] * p_length), lv[1] + p_ll[1] + (u[1] * p_length),
-             lv[2] + p_ll[2] + (u[2] * p_length)]
+        v = [lv[0] + p_ll[0] + (u[0] * branch_length), lv[1] + p_ll[1] + (u[1] * branch_length),
+             lv[2] + p_ll[2] + (u[2] * branch_length)]
 
         if random.uniform(0, 1) < 0.1:
             branch = False
@@ -362,20 +396,20 @@ def create(p_depth,  # tree depth,
                     turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
                 if random.uniform(0, 1) < 0.9:
                     branch_turn = branch_turn + random.uniform(-math.pi / 6, math.pi / 6)
-                
+
                 branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
                 create(p_depth, p_length, p_length_inc, p_r, p_rate,
                        p_n,
                        p_l,
                        branch_turn, branch_shift,
                        polygons, num_branches, branch_ang,
-                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr,pine)
+                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1)
 
         else:
             randx = []
-            randy = [] #i am creating random lists because otherwise changing the number of foliage would affect the seed
+            randy = []  # i am creating random lists because otherwise changing the number of foliage would affect the seed
             randz = []
-            for r in range (0,20): 
+            for r in range(0, 20):
                 randx.append(random.uniform(-foliage_spr, foliage_spr))
                 randy.append(random.uniform(-foliage_spr, foliage_spr))
                 randz.append(random.uniform(-foliage_spr, foliage_spr))
@@ -387,6 +421,102 @@ def create(p_depth,  # tree depth,
                           p_n[1] + randy[j],
                           p_n[2] + randz[j], my_sphere)
 
+def createPine(p_depth,  # tree depth,
+           p_length, p_length_inc, p_r, p_rate,
+           p_l,  # last segment tip
+           p_ll,  # last segment base
+           branch_turn, branch_shift,
+           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr,
+           first_segment_l, pine_level):
+    if p_depth > 0:
+
+        branch_length = p_length * first_segment_l
+
+        # get vector of last segment
+        lv = [p_l[0] - p_ll[0], p_l[1] - p_ll[1], p_l[2] - p_ll[2]]
+        # find the magnitude of vector p_lx, p_ly, p_lz
+        m = math.sqrt(math.pow(lv[0], 2) + math.pow(lv[1], 2) + math.pow(lv[2], 2))
+        # divide the vector by its magnitude to get unit vector
+        u = [lv[0] / m, lv[1] / m, lv[2] / m]
+        # now we add unit vector (multiplied by length) to the values to create new points
+        v = [lv[0] + p_ll[0] + (u[0] * branch_length), lv[1] + p_ll[1] + (u[1] * branch_length),
+             lv[2] + p_ll[2] + (u[2] * branch_length)]
+
+        if pine_level == 3 or pine_level ==2 :
+            newP = [p_l[0] + 0.1, p_l[1], p_l[2]]
+            p = get_sp_point(p_l, p_ll, newP)
+
+            points = point_rotate_3d(p[0], p[1], p[2],
+                                     newP[0], newP[1], newP[2],
+                                     v[0], v[1], v[2],
+                                     branch_turn)
+            yTurn = point_rotate_3d(p_l[0], p_l[1], p_l[2],
+                                     v[0], v[1], v[2],
+                                     points[0], points[1], points[2],
+                                     branch_shift)
+            
+            p_n = yTurn
+            
+            
+            
+        else:
+            p_n = v
+
+        # create a tube using the old and new points the angles control the tilt of the base and the top of the segment
+        polytube(
+            p_l[0], p_l[1], p_l[2],  # base point
+            p_n[0], p_n[1], p_n[2],  # top point
+            p_ll[0], p_ll[1], p_ll[2],
+            p_r, p_r * p_rate,  # base and top radius
+            polygons)
+
+        # reducing length and radius for a new segment, counting depth
+        p_length = (p_length * p_length_inc)
+        p_r = p_r * p_rate
+        p_depth = p_depth - 1.0
+        
+        if pine_level == 1:
+            createPine(p_depth, p_length, p_length_inc, p_r, p_rate,
+                       p_n,
+                       p_l,
+                       branch_turn, branch_shift,
+                       polygons, num_branches, branch_ang,
+                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, 1)
+        
+                        
+        if p_depth > 0:
+            branch_turn = branch_ang
+            turn = turn + math.pi / 2.0
+            for i in range(0, num_branches):
+                p_length = p_length + random.uniform(-0.5, 0.5)
+                if random.uniform(0, 1) < 0.9:
+                    turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
+                if random.uniform(0, 1) < 0.9:
+                    branch_turn = branch_turn + random.uniform(-math.pi / 6, math.pi / 6)
+
+                branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
+                createPine(p_depth * 0.5, p_length  *0.7, p_length_inc, p_r, p_rate,
+                       p_n,
+                       p_l,
+                       branch_turn, branch_shift,
+                       polygons, num_branches, branch_ang,
+                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, 1, 2)
+
+        else:
+            randx = []
+            randy = []  # i am creating random lists because otherwise changing the number of foliage would affect the seed
+            randz = []
+            for r in range(0, 20):
+                randx.append(random.uniform(-foliage_spr, foliage_spr))
+                randy.append(random.uniform(-foliage_spr, foliage_spr))
+                randz.append(random.uniform(-foliage_spr, foliage_spr))
+            for j in range(0, foliage_num):
+                my_sphere = cmds.polyPlatonicSolid(l=foliage_sze, name='leaves#')
+                for i in range(0, foliage_res):
+                    cmds.polySmooth(my_sphere)
+                cmds.move(p_n[0] + randx[j],
+                          p_n[1] + randy[j],
+                          p_n[2] + randz[j], my_sphere)
 
 create_ui('miniTree', apply_call_back)
 
