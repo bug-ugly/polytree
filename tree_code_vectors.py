@@ -9,9 +9,10 @@ def create_ui(pWindowTitle, pApplyCallBack):
     if cmds.window(windowID, exists=True):
         cmds.deleteUI(windowID)
 
-    cmds.window(windowID, title=pWindowTitle, resizeToFitChildren=True, sizeable=False)
-    cmds.rowColumnLayout(numberOfColumns=1)
-
+    cmds.window(windowID, title=pWindowTitle, sizeable = False, resizeToFitChildren = True)
+    cmds.rowColumnLayout(numberOfColumns=1, adj = True)
+    logopath = cmds.internalVar(upd = True)+ "icons/mini_tree_logo.png"
+    cmds.image(image=logopath )
     form = cmds.formLayout()
     tabs = cmds.tabLayout(innerMarginWidth=5, innerMarginHeight=5)
     cmds.formLayout(form, edit=True,
@@ -34,7 +35,7 @@ def create_ui(pWindowTitle, pApplyCallBack):
 
     cmds.setParent('..')
 
-    child2 = cmds.rowColumnLayout(numberOfColumns=1)
+    child2 = cmds.rowColumnLayout(numberOfColumns=1, adj = True)
 
     cmds.separator(h=10, style='none')
     treeFoliageNumber = cmds.intSliderGrp(label='Foliage number:', min=1, max=20, value=1, step=1, field=True)
@@ -50,14 +51,18 @@ def create_ui(pWindowTitle, pApplyCallBack):
     cmds.setParent('..')
     cmds.setParent('..')
 
-    cmds.rowColumnLayout(numberOfColumns=2)
+    cmds.rowColumnLayout(numberOfColumns=2, adj = True)
 
     def changeTextFld(*args):
         cmds.intFieldGrp(randomSeed, edit=True, v1=random.randint(0, 9999))
-
+    cmds.separator(h=10, style='none')
+    cmds.separator(h=10, style='none')
     randomSeed = cmds.intFieldGrp(label='Seed:', numberOfFields=1, value1=1234)
     cmds.button(label='Randomize seed', command=changeTextFld)
-
+    cmds.setParent('..')
+    cmds.rowColumnLayout(numberOfColumns=1, adj = True)
+    cmds.separator(h=10, style='none')
+    cmds.separator(h=10, style='none')
     cmds.button(label='Create tree', align='center', command=functools.partial(pApplyCallBack,
                                                                                polyNumberField,
                                                                                treeDepthField,
@@ -75,7 +80,8 @@ def create_ui(pWindowTitle, pApplyCallBack):
                                                                                treeFoliageNumber,
                                                                                treeFoliageSpread
                                                                                ))
-
+    cmds.separator(h=10, style='none')
+    cmds.separator(h=10, style='none')
     def cancelCallBack(*pArgs):
         if cmds.window(windowID, exists=True):
             cmds.deleteUI(windowID)
@@ -131,7 +137,7 @@ def apply_call_back(pPolyNumberField,
            [0.0, 0.0, 0.0],
            0.0, 0.0,
            polycount, branches, branches_a,
-           foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread
+           foliage_s, foliage_r, 0.0, True, foliage_n, foliage_spread, True
            )
     
     merge_tree()
@@ -302,7 +308,7 @@ def create(p_depth,  # tree depth,
            p_l,  # last segment tip
            p_ll,  # last segment base
            branch_turn, branch_shift,
-           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr):
+           polygons, num_branches, branch_ang, foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr, pine):
     if p_depth > 0:
         # get vector of last segment
         lv = [p_l[0] - p_ll[0], p_l[1] - p_ll[1], p_l[2] - p_ll[2]]
@@ -356,14 +362,14 @@ def create(p_depth,  # tree depth,
                     turn = turn + random.uniform(-math.pi / 2, math.pi / 2)
                 if random.uniform(0, 1) < 0.9:
                     branch_turn = branch_turn + random.uniform(-math.pi / 6, math.pi / 6)
-
+                
                 branch_shift = (i * ((math.pi * 2.0) / num_branches)) + turn
                 create(p_depth, p_length, p_length_inc, p_r, p_rate,
                        p_n,
                        p_l,
                        branch_turn, branch_shift,
                        polygons, num_branches, branch_ang,
-                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr)
+                       foliage_sze, foliage_res, turn, branch, foliage_num, foliage_spr,pine)
 
         else:
             randx = []
